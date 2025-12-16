@@ -207,6 +207,25 @@
             font-size: 0.95em;
             color: #0c5460;
         }
+
+        .demo-notice {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .demo-notice h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .demo-notice p {
+            color: #856404;
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
@@ -214,6 +233,12 @@
         <div class="header">
             <h1>🎬 AI Video Generator</h1>
             <p>Transform your text into stunning high-quality videos powered by Google Veo 3</p>
+        </div>
+
+        <div class="demo-notice">
+            <h3>⚠️ Demo Version</h3>
+            <p>This is a frontend demo. To enable actual video generation, backend integration is required.</p>
+            <p>Contact the developer to set up the full API integration.</p>
         </div>
         
         <div class="card">
@@ -266,12 +291,13 @@
                     />
                 </div>
                 
-                <button type="submit" class="btn" id="generateBtn">Generate Video</button>
+                <button type="submit" class="btn" id="generateBtn">Generate Video (Demo)</button>
                 
                 <div id="status" class="status"></div>
             </form>
             
             <div id="videoResult" class="video-result">
+                <h3 style="margin-bottom: 15px;">Generated Video Preview:</h3>
                 <video id="videoPlayer" controls></video>
                 <button class="btn download-btn" id="downloadBtn">Download Video</button>
             </div>
@@ -306,7 +332,6 @@
         const generateBtn = document.getElementById('generateBtn');
         
         let currentVideoUrl = '';
-        let requestId = '';
         
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -319,29 +344,43 @@
             
             // Validate 1080p only for 16:9
             if (resolution === '1080p' && aspectRatio !== '16:9') {
-                showStatus('error', '1080p resolution is only available for 16:9 aspect ratio');
+                showStatus('error', '❌ 1080p resolution is only available for 16:9 aspect ratio. Please select 720p or change aspect ratio to 16:9.');
                 return;
             }
             
             generateBtn.disabled = true;
             videoResult.style.display = 'none';
-            showStatus('loading', 'Generating your video... This may take 1-3 minutes');
+            showStatus('loading', '🎬 Generating your video... This may take 1-3 minutes');
             
-            try {
-                // Note: This is a demo. In production, you'd need a backend API
-                // to handle the actual video generation with proper API keys
-                showStatus('loading', 'Video generation started! Request ID: DEMO-' + Date.now());
+            // Simulate video generation process
+            setTimeout(() => {
+                showStatus('loading', '⏳ Processing your request... Analyzing prompt');
+            }, 1000);
+            
+            setTimeout(() => {
+                showStatus('loading', '🎨 Creating video frames... 30% complete');
+            }, 2000);
+            
+            setTimeout(() => {
+                showStatus('loading', '🎵 Adding audio elements... 60% complete');
+            }, 3000);
+            
+            setTimeout(() => {
+                showStatus('loading', '✨ Finalizing video... 90% complete');
+            }, 4000);
+            
+            setTimeout(() => {
+                // Use a sample video for demo
+                currentVideoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+                videoPlayer.src = currentVideoUrl;
+                videoResult.style.display = 'block';
                 
-                // Simulate processing
-                setTimeout(() => {
-                    showStatus('success', '✅ Video generated successfully! In production, this would show your actual video.');
-                    generateBtn.disabled = false;
-                }, 3000);
-                
-            } catch (error) {
-                showStatus('error', 'Error: ' + error.message);
+                showStatus('success', '✅ Video generated successfully! (Demo video shown - integrate backend API for actual generation)');
                 generateBtn.disabled = false;
-            }
+                
+                // Scroll to video
+                videoResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 5000);
         });
         
         downloadBtn.addEventListener('click', () => {
@@ -349,6 +388,7 @@
                 const a = document.createElement('a');
                 a.href = currentVideoUrl;
                 a.download = 'ai-generated-video.mp4';
+                a.target = '_blank';
                 a.click();
             }
         });
@@ -356,11 +396,22 @@
         function showStatus(type, message) {
             status.className = 'status ' + type;
             if (type === 'loading') {
-                status.innerHTML = '<div class="spinner"></div>' + message;
+                status.innerHTML = '<div class="spinner"></div><p>' + message + '</p>';
             } else {
-                status.textContent = message;
+                status.innerHTML = '<p>' + message + '</p>';
             }
         }
+
+        // Update resolution options based on aspect ratio
+        document.getElementById('aspectRatio').addEventListener('change', (e) => {
+            const resolutionSelect = document.getElementById('resolution');
+            if (e.target.value !== '16:9') {
+                resolutionSelect.value = '720p';
+                resolutionSelect.querySelector('option[value="1080p"]').disabled = true;
+            } else {
+                resolutionSelect.querySelector('option[value="1080p"]').disabled = false;
+            }
+        });
     </script>
 </body>
 </html>
