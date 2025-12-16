@@ -87,6 +87,71 @@
             gap: 20px;
             margin-bottom: 25px;
         }
+
+        .content-mode {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .mode-option {
+            flex: 1;
+            padding: 20px;
+            border: 3px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .mode-option:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .mode-option.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+        }
+
+        .mode-option input[type="radio"] {
+            display: none;
+        }
+
+        .mode-option .mode-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .mode-option .mode-title {
+            font-weight: 600;
+            font-size: 1.2em;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .mode-option .mode-desc {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .nsfw-warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .nsfw-warning.show {
+            display: block;
+        }
+
+        .nsfw-warning strong {
+            color: #856404;
+        }
         
         .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -306,6 +371,28 @@
                 </div>
 
                 <div class="form-group">
+                    <label>Content Mode *</label>
+                    <div class="content-mode">
+                        <label class="mode-option selected">
+                            <input type="radio" name="contentMode" value="sfw" checked>
+                            <div class="mode-icon">✅</div>
+                            <div class="mode-title">SFW</div>
+                            <div class="mode-desc">Safe for Work - Family friendly content</div>
+                        </label>
+                        <label class="mode-option">
+                            <input type="radio" name="contentMode" value="nsfw">
+                            <div class="mode-icon">🔞</div>
+                            <div class="mode-title">NSFW</div>
+                            <div class="mode-desc">Not Safe for Work - Adult content (18+)</div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="nsfw-warning" id="nsfwWarning">
+                    <strong>⚠️ NSFW Mode Active:</strong> You are generating adult content. Ensure you comply with all applicable laws and platform policies. Users must be 18+ years old.
+                </div>
+
+                <div class="form-group">
                     <label for="prompt">Video Description *</label>
                     <textarea 
                         id="prompt" 
@@ -379,8 +466,8 @@
                 <p>Describe sounds & dialogue</p>
             </div>
             <div class="feature">
-                <h3>🎬 8 Seconds</h3>
-                <p>Perfect for social media</p>
+                <h3>🔞 SFW & NSFW</h3>
+                <p>Both content modes supported</p>
             </div>
         </div>
     </div>
@@ -392,8 +479,26 @@
         const videoPlayer = document.getElementById('videoPlayer');
         const downloadBtn = document.getElementById('downloadBtn');
         const generateBtn = document.getElementById('generateBtn');
+        const nsfwWarning = document.getElementById('nsfwWarning');
+        const modeOptions = document.querySelectorAll('.mode-option');
         
         let currentVideoUrl = '';
+        
+        // Handle content mode selection
+        modeOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                modeOptions.forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input[type="radio"]').checked = true;
+                
+                const mode = this.querySelector('input[type="radio"]').value;
+                if (mode === 'nsfw') {
+                    nsfwWarning.classList.add('show');
+                } else {
+                    nsfwWarning.classList.remove('show');
+                }
+            });
+        });
         
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -404,15 +509,25 @@
             const aspectRatio = document.getElementById('aspectRatio').value;
             const resolution = document.getElementById('resolution').value;
             const negativePrompt = document.getElementById('negativePrompt').value;
+            const contentMode = document.querySelector('input[name="contentMode"]:checked').value;
             
             if (resolution === '1080p' && aspectRatio !== '16:9') {
                 showStatus('error', '❌ 1080p resolution is only available for 16:9 aspect ratio.');
                 return;
             }
             
+            // Age verification for NSFW
+            if (contentMode === 'nsfw') {
+                const confirmed = confirm('⚠️ NSFW Content Warning\n\nYou must be 18+ years old to generate adult content.\n\nBy clicking OK, you confirm that:\n• You are at least 18 years old\n• You will use this content responsibly\n• You comply with all applicable laws\n\nDo you want to continue?');
+                
+                if (!confirmed) {
+                    return;
+                }
+            }
+            
             generateBtn.disabled = true;
             videoResult.style.display = 'none';
-            showStatus('loading', '🎬 Sending request to your backend...');
+            showStatus('loading', `🎬 Generating ${contentMode.toUpperCase()} video...`);
             
             try {
                 const response = await fetch(apiEndpoint, {
@@ -425,7 +540,8 @@
                         modelName: model,
                         aspectRatio,
                         resolution,
-                        negativePrompt: negativePrompt || undefined
+                        negativePrompt: negativePrompt || undefined,
+                        contentMode: contentMode
                     })
                 });
                 
