@@ -152,6 +152,7 @@
             width: 100%;
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            background: #000;
         }
         
         .download-btn {
@@ -208,23 +209,46 @@
             color: #0c5460;
         }
 
-        .demo-notice {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
+        .important-notice {
+            background: #ff6b6b;
+            color: white;
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
             text-align: center;
         }
 
-        .demo-notice h3 {
-            color: #856404;
+        .important-notice h3 {
             margin-bottom: 10px;
         }
 
-        .demo-notice p {
-            color: #856404;
-            margin: 5px 0;
+        .setup-instructions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .setup-instructions h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .setup-instructions ol {
+            margin-left: 20px;
+            color: #555;
+        }
+
+        .setup-instructions li {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        .setup-instructions code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
         }
     </style>
 </head>
@@ -235,14 +259,52 @@
             <p>Transform your text into stunning high-quality videos powered by Google Veo 3</p>
         </div>
 
-        <div class="demo-notice">
-            <h3>⚠️ Demo Version</h3>
-            <p>This is a frontend demo. To enable actual video generation, backend integration is required.</p>
-            <p>Contact the developer to set up the full API integration.</p>
+        <div class="important-notice">
+            <h3>⚠️ Backend Required for Video Generation</h3>
+            <p>This website needs a backend server to generate actual videos.</p>
+            <p>GitHub Pages only hosts static files - it cannot run server-side code or make API calls with secret keys.</p>
         </div>
         
         <div class="card">
-            <form id="videoForm">
+            <div class="setup-instructions">
+                <h3>🔧 To Make This Work - You Need:</h3>
+                <ol>
+                    <li><strong>A Backend Server</strong> (Node.js, Python, etc.) hosted on platforms like:
+                        <ul style="margin-top: 5px;">
+                            <li>Vercel, Netlify, Railway, Render</li>
+                            <li>AWS Lambda, Google Cloud Functions</li>
+                            <li>Your own VPS/server</li>
+                        </ul>
+                    </li>
+                    <li><strong>Google AI API Key</strong> with access to Veo 3 model</li>
+                    <li><strong>Backend API endpoint</strong> that:
+                        <ul style="margin-top: 5px;">
+                            <li>Receives video generation requests from this frontend</li>
+                            <li>Calls Google's Veo 3 API with your secret key</li>
+                            <li>Returns the generated video URL</li>
+                        </ul>
+                    </li>
+                </ol>
+                
+                <p style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 5px;">
+                    <strong>💡 Alternative Solution:</strong> I can help you deploy this as a complete full-stack application on platforms like Vercel or Railway where both frontend and backend work together!
+                </p>
+            </div>
+
+            <form id="videoForm" style="margin-top: 30px;">
+                <div class="form-group">
+                    <label for="apiEndpoint">Your Backend API Endpoint (Required)</label>
+                    <input 
+                        type="url" 
+                        id="apiEndpoint" 
+                        placeholder="https://your-backend.com/api/generate-video"
+                        required
+                    />
+                    <div class="tip">
+                        Enter your backend API endpoint URL that handles video generation
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="prompt">Video Description *</label>
                     <textarea 
@@ -291,13 +353,13 @@
                     />
                 </div>
                 
-                <button type="submit" class="btn" id="generateBtn">Generate Video (Demo)</button>
+                <button type="submit" class="btn" id="generateBtn">Generate Video</button>
                 
                 <div id="status" class="status"></div>
             </form>
             
             <div id="videoResult" class="video-result">
-                <h3 style="margin-bottom: 15px;">Generated Video Preview:</h3>
+                <h3 style="margin-bottom: 15px;">Generated Video:</h3>
                 <video id="videoPlayer" controls></video>
                 <button class="btn download-btn" id="downloadBtn">Download Video</button>
             </div>
@@ -336,52 +398,97 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const apiEndpoint = document.getElementById('apiEndpoint').value;
             const prompt = document.getElementById('prompt').value;
             const model = document.getElementById('model').value;
             const aspectRatio = document.getElementById('aspectRatio').value;
             const resolution = document.getElementById('resolution').value;
             const negativePrompt = document.getElementById('negativePrompt').value;
             
-            // Validate 1080p only for 16:9
             if (resolution === '1080p' && aspectRatio !== '16:9') {
-                showStatus('error', '❌ 1080p resolution is only available for 16:9 aspect ratio. Please select 720p or change aspect ratio to 16:9.');
+                showStatus('error', '❌ 1080p resolution is only available for 16:9 aspect ratio.');
                 return;
             }
             
             generateBtn.disabled = true;
             videoResult.style.display = 'none';
-            showStatus('loading', '🎬 Generating your video... This may take 1-3 minutes');
+            showStatus('loading', '🎬 Sending request to your backend...');
             
-            // Simulate video generation process
-            setTimeout(() => {
-                showStatus('loading', '⏳ Processing your request... Analyzing prompt');
-            }, 1000);
-            
-            setTimeout(() => {
-                showStatus('loading', '🎨 Creating video frames... 30% complete');
-            }, 2000);
-            
-            setTimeout(() => {
-                showStatus('loading', '🎵 Adding audio elements... 60% complete');
-            }, 3000);
-            
-            setTimeout(() => {
-                showStatus('loading', '✨ Finalizing video... 90% complete');
-            }, 4000);
-            
-            setTimeout(() => {
-                // Use a sample video for demo
-                currentVideoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
-                videoPlayer.src = currentVideoUrl;
-                videoResult.style.display = 'block';
+            try {
+                const response = await fetch(apiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt,
+                        modelName: model,
+                        aspectRatio,
+                        resolution,
+                        negativePrompt: negativePrompt || undefined
+                    })
+                });
                 
-                showStatus('success', '✅ Video generated successfully! (Demo video shown - integrate backend API for actual generation)');
+                if (!response.ok) {
+                    throw new Error(`Backend error: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.requestId) {
+                    showStatus('loading', `⏳ Video generation started! Request ID: ${data.requestId}<br>Checking status...`);
+                    pollVideoStatus(apiEndpoint, data.requestId);
+                } else if (data.videoUrl) {
+                    displayVideo(data.videoUrl);
+                } else {
+                    throw new Error('Invalid response from backend');
+                }
+                
+            } catch (error) {
+                showStatus('error', `❌ Error: ${error.message}<br><br>Make sure your backend API is running and accessible.`);
                 generateBtn.disabled = false;
-                
-                // Scroll to video
-                videoResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 5000);
+            }
         });
+        
+        async function pollVideoStatus(apiEndpoint, requestId) {
+            const maxAttempts = 60;
+            let attempts = 0;
+            
+            const checkStatus = async () => {
+                try {
+                    const response = await fetch(`${apiEndpoint}/status/${requestId}`);
+                    const data = await response.json();
+                    
+                    if (data.status === 'SUCCESS' && data.videoUrl) {
+                        displayVideo(data.videoUrl);
+                    } else if (data.status === 'FAILED') {
+                        throw new Error(data.error || 'Video generation failed');
+                    } else if (data.status === 'IN_PROGRESS') {
+                        attempts++;
+                        if (attempts < maxAttempts) {
+                            showStatus('loading', `⏳ Generating video... ${attempts * 5} seconds elapsed`);
+                            setTimeout(checkStatus, 5000);
+                        } else {
+                            throw new Error('Video generation timeout');
+                        }
+                    }
+                } catch (error) {
+                    showStatus('error', `❌ Error: ${error.message}`);
+                    generateBtn.disabled = false;
+                }
+            };
+            
+            setTimeout(checkStatus, 5000);
+        }
+        
+        function displayVideo(videoUrl) {
+            currentVideoUrl = videoUrl;
+            videoPlayer.src = videoUrl;
+            videoResult.style.display = 'block';
+            showStatus('success', '✅ Video generated successfully!');
+            generateBtn.disabled = false;
+            videoResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
         
         downloadBtn.addEventListener('click', () => {
             if (currentVideoUrl) {
@@ -402,7 +509,6 @@
             }
         }
 
-        // Update resolution options based on aspect ratio
         document.getElementById('aspectRatio').addEventListener('change', (e) => {
             const resolutionSelect = document.getElementById('resolution');
             if (e.target.value !== '16:9') {
